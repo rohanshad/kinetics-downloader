@@ -4,8 +4,7 @@ import os
 import shutil
 import subprocess
 import pytube
-from joblib import delayed
-from joblib import Parallel
+import multiprocessing
 
 REQUIRED_COLUMNS = ['label', 'youtube_id', 'time_start', 'time_end', 'split', 'is_cc']
 TRIM_FORMAT = '%06d'
@@ -38,7 +37,7 @@ def download_clip(row, label_to_dir, trim, count):
     Download clip from youtube.
     row: dict-like objects with keys: ['label', 'youtube_id', 'time_start', 'time_end']
     'time_start' and 'time_end' matter if trim is True
-    trim: bool, trim video to action ot not
+    trim: bool, trim video to action or not
     """
 
     label = row['label']
@@ -64,11 +63,11 @@ def download_clip(row, label_to_dir, trim, count):
             except KeyError:
                 print('Unavailable video: ', filename)
                 return
-#         uncomment, if you want to skip any error:
-#
-#         except:
-#             print('Don\'t know why something went wrong(')
-#             return
+        #uncomment, if you want to skip any error:
+
+        except:
+            print('Don\'t know why something went wrong(')
+            return
     else:
         print('Already downloaded: ', filename)
 
@@ -91,7 +90,7 @@ def download_clip(row, label_to_dir, trim, count):
             command = 'ffmpeg -i "{input_filename}" ' \
                       '-ss {time_start} ' \
                       '-t {time_end} ' \
-                      '-c:v libx264 -c:a copy -threads 1 ' \
+                      '-loglevel error -c:v libx264 -c:a copy -threads 1 ' \
                       '"{output_filename}"'.format(
                            input_filename=input_filename,
                            time_start=start,
@@ -106,6 +105,17 @@ def download_clip(row, label_to_dir, trim, count):
             print('Finish trimming: ', filename)
 
     print('Processed %i out of %i' % (count + 1, TOTAL_VIDEOS))
+
+
+def iter_sample(data, label_to_dir, trim):
+    '''
+    Iterates over rows in dataset and passes into download_clip function
+    data: input csv file read via pandas
+    label_to_dir: file structure paths from class labels
+    trim: bool, trim video to action or not
+    '''
+    for count, row in data.iterrows():
+        download_clip(row, label_to_dir, trim, count)
 
 
 def main(input_csv, output_dir, trim, num_jobs):
@@ -124,8 +134,10 @@ def main(input_csv, output_dir, trim, num_jobs):
 
     TOTAL_VIDEOS = links_df.shape[0]
     # Download files by links from dataframe
-    Parallel(n_jobs=num_jobs)(delayed(download_clip)(
-            row, label_to_dir, trim, count) for count, row in links_df.iterrows())
+    
+    # Multiprocessing enabled
+    pool = multiprocessing.Pool(num_jobs)
+    pool.imap(iter_sample(links_df, label_to_dir, trim))
 
     # Clean tmp directory
     shutil.rmtree(label_to_dir['tmp'])
