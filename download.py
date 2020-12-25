@@ -60,14 +60,14 @@ def download_clip(row, label_to_dir, trim, count):
                     streams.filter(subtype=VIDEO_FORMAT).first().\
                     download(output_path, filename)
                 print('Finish downloading: ', filename)
-            except KeyError:
-                print('Unavailable video: ', filename)
-                return
+            # except KeyError:
+            #     print('Unavailable video: ', filename)
+            #     return
         #uncomment, if you want to skip any error:
 
             except:
                 print('Don\'t know why something went wrong(')
-                return
+                pass
     else:
         print('Already downloaded: ', filename)
 
