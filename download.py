@@ -50,24 +50,26 @@ def download_clip(row, label_to_dir, trim, count):
 
     # don't download if already exists
     if not os.path.exists(os.path.join(output_path, filename + VIDEO_EXTENSION)):
-        print('Start downloading: ', filename)
-        if pytube.YouTube(URL_BASE + filename).\
+        print('Start downloading: ', filename)        
+        try:
+            if pytube.YouTube(URL_BASE + filename).\
                 streams.filter(subtype=VIDEO_FORMAT).first() == None:
                 print('Unavailable video', filename)
-        else:
-            try:
+
+            else:
                 pytube.YouTube(URL_BASE + filename).\
                     streams.filter(subtype=VIDEO_FORMAT).first().\
                     download(output_path, filename)
-                print('Finish downloading: ', filename)
-            # except KeyError:
-            #     print('Unavailable video: ', filename)
-            #     return
-        #uncomment, if you want to skip any error:
+            print('Finish downloading: ', filename)
 
-            except:
-                print('Don\'t know why something went wrong(')
-                pass
+        # except KeyError:
+        #     print('Unavailable video: ', filename)
+        #     return
+    #uncomment, if you want to skip any error:
+
+        except:
+            print('Don\'t know why something went wrong...')
+            pass
     else:
         print('Already downloaded: ', filename)
 
