@@ -65,9 +65,9 @@ def download_clip(row, label_to_dir, trim, count):
                 return
         #uncomment, if you want to skip any error:
 
-        except:
-            print('Don\'t know why something went wrong(')
-            return
+            except:
+                print('Don\'t know why something went wrong(')
+                return
     else:
         print('Already downloaded: ', filename)
 
