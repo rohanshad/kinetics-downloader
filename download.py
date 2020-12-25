@@ -5,6 +5,8 @@ import shutil
 import subprocess
 import pytube
 import multiprocessing
+from io import StringIO
+import csv
 
 REQUIRED_COLUMNS = ['label', 'youtube_id', 'time_start', 'time_end', 'split', 'is_cc']
 TRIM_FORMAT = '%06d'
@@ -38,6 +40,7 @@ def download_clip(row, label_to_dir, trim, count):
     row: dict-like objects with keys: ['label', 'youtube_id', 'time_start', 'time_end']
     'time_start' and 'time_end' matter if trim is True
     trim: bool, trim video to action or not
+    count: counter
     """
 
     label = row['label']
@@ -92,7 +95,7 @@ def download_clip(row, label_to_dir, trim, count):
             command = 'ffmpeg -i "{input_filename}" ' \
                       '-ss {time_start} ' \
                       '-t {time_end} ' \
-                      '-loglevel error -c:v libx264 -c:a copy -threads 1 ' \
+                      '-loglevel error -c:v libx264 -c:a copy ' \
                       '"{output_filename}"'.format(
                            input_filename=input_filename,
                            time_start=start,
@@ -106,18 +109,8 @@ def download_clip(row, label_to_dir, trim, count):
                 return False
             print('Finish trimming: ', filename)
 
+    #print('Video processed')
     print('Processed %i out of %i' % (count + 1, TOTAL_VIDEOS))
-
-
-def iter_sample(data, label_to_dir, trim):
-    '''
-    Iterates over rows in dataset and passes into download_clip function
-    data: input csv file read via pandas
-    label_to_dir: file structure paths from class labels
-    trim: bool, trim video to action or not
-    '''
-    for count, row in data.iterrows():
-        download_clip(row, label_to_dir, trim, count)
 
 
 def main(input_csv, output_dir, trim, num_jobs):
@@ -139,7 +132,12 @@ def main(input_csv, output_dir, trim, num_jobs):
     
     # Multiprocessing enabled
     pool = multiprocessing.Pool(num_jobs)
-    pool.imap(iter_sample(links_df, label_to_dir, trim))
+
+    for count, rows in links_df.iterrows():
+        pool.apply_async(download_clip, [rows, label_to_dir, trim, count])
+
+    pool.close()
+    pool.join()
 
     # Clean tmp directory
     shutil.rmtree(label_to_dir['tmp'])
