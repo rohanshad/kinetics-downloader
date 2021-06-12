@@ -126,7 +126,6 @@ def main(input_csv, output_dir, trim, num_jobs):
     # Download files by links from dataframe
     
     # Multiprocessing enabled
-    print(num_jobs)
     pool = multiprocessing.Pool(num_jobs)
 
     if num_jobs > 1:
