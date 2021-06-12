@@ -32,3 +32,11 @@ For example:
 cd kinetics-downloader
 python download.py /path/to/kinetic_train.csv /path/to/videos/ --trim --num-jobs 10
 ```
+
+### Additional Notes
+
+This requires ffmpeg to work, on clusters like Sherlock remember to load the relevant modules before starting the script
+
+```
+module load system ffmpeg
+```

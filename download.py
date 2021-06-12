@@ -53,7 +53,7 @@ def download_clip(row, label_to_dir, trim, count):
 
     # don't download if already exists
     if not os.path.exists(os.path.join(output_path, filename + VIDEO_EXTENSION)):
-        print('Start downloading: ', filename)        
+        print('Start downloading: ', filename)    
         try:
             if pytube.YouTube(URL_BASE + filename).\
                 streams.filter(subtype=VIDEO_FORMAT).first() == None:
@@ -64,11 +64,6 @@ def download_clip(row, label_to_dir, trim, count):
                     streams.filter(subtype=VIDEO_FORMAT).first().\
                     download(output_path, filename)
             print('Finish downloading: ', filename)
-
-        # except KeyError:
-        #     print('Unavailable video: ', filename)
-        #     return
-    #uncomment, if you want to skip any error:
 
         except:
             print('Don\'t know why something went wrong...')
@@ -131,10 +126,16 @@ def main(input_csv, output_dir, trim, num_jobs):
     # Download files by links from dataframe
     
     # Multiprocessing enabled
+    print(num_jobs)
     pool = multiprocessing.Pool(num_jobs)
 
-    for count, rows in links_df.iterrows():
-        pool.apply_async(download_clip, [rows, label_to_dir, trim, count])
+    if num_jobs > 1:
+        for count, rows in links_df.iterrows():
+            pool.apply_async(download_clip, [rows, label_to_dir, trim, count])
+
+    else:
+        for count, rows in links_df.iterrows():
+            download_clip(rows, label_to_dir, trim, count)
 
     pool.close()
     pool.join()
